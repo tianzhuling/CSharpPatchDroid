@@ -1,4 +1,6 @@
 # CSharpPatchDroid
+![Version:v1.0](https://img.shields.io/badge/version-v1.0-blue
+)
 ## 简介
 ### 关于此软件
 这是一款免费且集成反编译，回编译等功能，为在安卓上逆向.NET工程而量身打造的安卓软件CSharpPatchDroid。内部采用命令行模式，较为直观。支持UnityC#代码逆向与修改，简单.NET程序反编译。内置自动补全依赖，自动匹配C#与.NET版本等功能。
