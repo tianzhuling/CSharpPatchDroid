@@ -1,4 +1,5 @@
-# CSharpPatchDroid ![Version:v1.0](https://img.shields.io/badge/version-v1.0-blue
+# CSharpPatchDroid 
+![Version:v1.0](https://img.shields.io/badge/version-v1.0-blue
 )
 ## 简介
 ### 关于此软件
