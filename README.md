@@ -21,3 +21,10 @@ p2p下载:https://tianzhuling.github.io/CSharpPatchDroid/v1.0/p2p/CSharpPatchDro
 
 蓝奏云:https://wwgc.lanzn.com/b01391wlyd
 密码:92ng，将后缀名转为.apk再下载
+## 如何使用
+重定向至https://tianzhuling.github.io/CSharpPatchDroid/v1.0/doc/index.html
+## 更多详情
+请移步 https://tianzhuling.github.io/CSharpPatchDroid/v1.0/doc/index.html
+## 关于作者
+### 联系方式
+tianzhuling@outlook.com
