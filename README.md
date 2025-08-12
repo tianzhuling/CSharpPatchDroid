@@ -22,7 +22,7 @@ p2p下载:https://tianzhuling.github.io/CSharpPatchDroid/v1.0/p2p/CSharpPatchDro
 城通网盘:https://url72.ctfile.com/f/65372172-8416126722-bc39a2?p=1182 （访问密码：1182）
 
 蓝奏云:https://wwgc.lanzn.com/b01391wlyd
-密码:92ng，将后缀名转为.apk再下载
+密码:92ng，将后缀名转为.apk再安装
 ## 如何使用
 重定向至https://tianzhuling.github.io/CSharpPatchDroid/v1.0/doc/index.html
 ## 更多详情
