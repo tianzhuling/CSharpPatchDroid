@@ -113,7 +113,9 @@ public static class Compiler
         Directory.CreateDirectory(baseDir);
         var stopwatch = new Stopwatch();
         stopwatch.Start();
-        var result = compilation.Emit(outputPath);
+        string tempPath = outputPath + ".tmp";
+        var result = compilation.Emit(tempPath);
+
         stopwatch.Stop();
         var time = stopwatch.Elapsed.TotalSeconds.ToString();
         int warningCount;
@@ -122,6 +124,7 @@ public static class Compiler
         int hiddenCount;
         if (!result.Success)
         {
+            File.Delete(tempPath);
             Print.error("编译失败：");
             Program.log.error("编译失败", "Compiler,Start Line110");
             var newReferences = new List<ErrorAnalysis.Reference>();
@@ -260,6 +263,7 @@ public static class Compiler
         }
         else
         {
+            File.Replace(tempPath, outputPath, null);
             File.WriteAllText("/storage/emulated/0/CSharpPatchDroidOutput/buildLog.txt", string.Empty);
             warningCount = 0;
             errorCount = 0;
