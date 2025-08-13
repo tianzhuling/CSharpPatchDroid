@@ -16,7 +16,7 @@ Github Release:[一键穿越](https://github.com/tianzhuling/CSharpPatchDroid/re
 ### 备用下载
 城通网盘 密码 1182:[龟速下载](https://url72.ctfile.com/f/65372172-8416126722-bc39a2?p=1182) 
 
-蓝奏云 密码:92ng(❗将后缀名转为.apk再安装):[跳转蓝奏云](https://wwgc.lanzn.com/b01391wlyd)
+蓝奏云 (需手动解压):[跳转蓝奏云](https://wwgc.lanzn.com/iCZI333fsxle)
 ## 更多详情
 如果需要更好看的页面及更详细的内容，请移步[CSharpPatchDroid使用文档](https://tianzhuling.github.io/CSharpPatchDroid/v1.0/doc/index.html)
 ## 关于作者
