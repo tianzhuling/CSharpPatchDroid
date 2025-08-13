@@ -1,5 +1,5 @@
 # CSharpPatchDroid 
-![Version:v1.0](https://img.shields.io/badge/version-v1.0-blue
+![Version:v1.2](https://img.shields.io/badge/version-v1.2-blue
 )
 ## 简介
 ### Logo
@@ -10,7 +10,7 @@
 反编译Unity项目，逆向分析，制作Mod菜单，编译C#，还原.NET项目……
 ## 下载
 ### 推荐下载
-Github Release:[一键穿越](https://github.com/tianzhuling/CSharpPatchDroid/releases/tag/v1.0)
+Github Release:[一键穿越](https://github.com/tianzhuling/CSharpPatchDroid/releases/tag/v1.2)
 
 
 ### 备用下载
