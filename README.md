@@ -18,7 +18,7 @@ Github Release:[一键穿越](https://github.com/tianzhuling/CSharpPatchDroid/re
 
 蓝奏云 (需手动解压):[跳转蓝奏云](https://wwgc.lanzn.com/iCZI333fsxle)
 ## 更多详情
-如果需要更好看的页面及更详细的内容，请移步[CSharpPatchDroid使用文档](https://tianzhuling.github.io/CSharpPatchDroid/v1.0/doc/index.html)
+请移步[CSharpPatchDroid使用文档](https://tianzhuling.github.io/CSharpPatchDroid/v1.0/doc/index.html)
 ## 关于作者
 ### 联系方式
 tianzhuling@outlook.com
