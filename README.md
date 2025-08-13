@@ -12,7 +12,7 @@
 ### 推荐下载
 Github Release:[一键穿越](https://github.com/tianzhuling/CSharpPatchDroid/releases/tag/v1.0)
 
-p2p下载(下载完后记得做种，让别人下载更快一点⚡⚡):[bt种子下载](https://tianzhuling.github.io/CSharpPatchDroid/v1.0/p2p/CSharpPatchDroid_v1.0_arm64.torrent)
+
 ### 备用下载
 城通网盘 密码 1182:[龟速下载](https://url72.ctfile.com/f/65372172-8416126722-bc39a2?p=1182) 
 
