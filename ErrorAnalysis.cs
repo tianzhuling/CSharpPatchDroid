@@ -14,6 +14,7 @@ public class ErrorAnalysis
     public string message;
     public string csPath;
     public string referenceInfo;
+    public bool chineseLanguage;
     public Reference reference;
     public ErrorAnalysis(Diagnostic diag)
     {
@@ -23,8 +24,15 @@ public class ErrorAnalysis
         this.line = span.StartLinePosition.Line + 1;
         this.character = span.StartLinePosition.Character + 1;
         this.type = diag.Id;
-
         this.message = diag.GetMessage();
+        if (diag.ToString()[diag.ToString().Length - 1].ToString() == "。")
+        {
+            chineseLanguage = true;
+        }
+        else
+        {
+            chineseLanguage = false;
+        }
 
     }
     public Reference getReference()
@@ -36,11 +44,19 @@ public class ErrorAnalysis
             return null;
         }
         //Print.print(this.diag.ToString());
-        this.referenceInfo = this.diag.ToString().Split("”在未引用的程序集中定义。必须添加对程序集“")[1].Split("”的引用。")[0];
+        if (this.chineseLanguage)
+        {
+            this.referenceInfo = this.diag.ToString().Split("必须添加对程序集“")[1].Split("”的引用。")[0];
+
+        }
+        else
+        {
+            this.referenceInfo = this.diag.ToString().Split("You must add a reference to assembly '")[1].Split("'")[0];
+        }
         var include = referenceInfo.Split(",")[0];
         var version = referenceInfo.Split(", Version=")[1].Split(",")[0];
         var culture = referenceInfo.Split(", Culture=")[1].Split(",")[0];
-        var publicKeyToken = referenceInfo.Split(", PublicKeyToken=")[1].Split("”的引用。")[0];
+        var publicKeyToken = referenceInfo.Split(", PublicKeyToken=")[1];
         return new Reference(include, version, culture, publicKeyToken);
 
     }

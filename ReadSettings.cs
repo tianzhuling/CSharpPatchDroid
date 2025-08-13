@@ -20,7 +20,10 @@ public static class ReadSettings
         init();
         var data = new
         {
-            HOME = "/storage/emulated/0/CSharpPatchDroidOutput/projects"
+            HOME = "/storage/emulated/0/CSharpPatchDroidOutput/projects",
+            relativePathMode = false,
+            autoComplete = true,
+            autoCompleteReference = true
 
         };
         string Settings = JsonSerializer.Serialize(data);
@@ -34,6 +37,9 @@ public static class ReadSettings
     }
     public class Settings()
     {
+        public bool relativePathMode { get; set; }
+        public bool autoComplete { get; set; }
+        public bool autoCompleteReference { get; set; }
         public string HOME { get; set; }
     }
 

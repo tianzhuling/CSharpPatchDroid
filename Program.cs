@@ -23,17 +23,22 @@ public static class Program
     public static List<string> projects;//弃用
     public static Dictionary<string, List<string>> commandTips { get; }
     public static Log log { get; }
+    public static string projectPathForRelativePathMode;
+    public static string dllPathForRelativePathMode;
     //public static string DOTNET;
     static Program()
+
     {
-        if (!Path.Exists("/storage/emulated/0/CSharpPatchDroidOutput/"))
+        try
         {
-            //log.tip("检测到未创建/storage/emulated/0/CSharpPatchDroidOutput/");
+
             Directory.CreateDirectory("/storage/emulated/0/CSharpPatchDroidOutput/");
         }
-        else
+        catch
         {
-            //log.tip("/storage/emulated/0/CSharpPatchDroidOutput/目录存在");
+            Print.error("请给手机赋予存储权限");
+            Console.Write("回车以继续:");
+            Console.ReadLine();
         }
         log = new Log("/storage/emulated/0/CSharpPatchDroidOutput/log.txt");
 
@@ -51,12 +56,15 @@ public static class Program
             Directory.CreateDirectory(HOME);
         }
         commandTips = new Dictionary<string, List<string>>();
-        commandTips.Add("create", new List<string>() { "dll路径", "C#版本", "框架(.NETCOREAPP,.NETSTANDARD,.NETFRAMEWORK,SILVERLIGHT)默认.NETFRAMEWORK", "框架版本", "项目名称", "输出根路径(默认在/sdcard/CSharpPatchDroidOutput/projects)" });
+        commandTips.Add("create", new List<string>() { "dll路径", "C#版本", "框架(.NETCOREAPP,.NETSTANDARD,.NETFRAMEWORK,SILVERLIGHT)默认.NETFRAMEWORK", "框架版本", "项目名称", "输出根路径(默认在/storage/emulated/0/CSharpPatchDroidOutput/projects)" });
         commandTips.Add("sethome", new List<string>() { "新HOME路径" });
         commandTips.Add("homepath", new List<string>());
         commandTips.Add("updateproject", new List<string>() { "项目名称", "根目录路径(HOME目录，默认/storage/emulated/0/CSharpPatchDroidOutput/projects)" });
         commandTips.Add("update", new List<string>() { "项目名称", "根目录路径(HOME目录，默认/storage/emulated/0/CSharpPatchDroidOutput/projects)", ".csproj文件路径(默认自动查找)" });
         commandTips.Add("clear", new List<string>() { "确定?(确定输入Y，以后都是Y/n)", "你将要删除/storage/emulated/0/CSharpPatchDroidOutput中的所有内容", "最后一道防线" });
+        commandTips.Add("resetsettings", new List<string>() { });
+        commandTips.Add("restart", new List<string>() { });
+        commandTips.Add("exit", new List<string>() { });
         //DOTNET = "/storage/emulated/0/CSharpPatchDroidOutput/dotnet/sdk/8.0.412";
         log.ok("完成初始化");
 
@@ -153,6 +161,21 @@ public static class Program
                 clear(args);
 
             }
+            if (command == "resetsettings")
+            {
+                ReadSettings.InitSettings();
+                Print.sucess("重置设置成功");
+            }
+            if (command == "restart")
+            {
+                Console.Clear();
+                Main();
+            }
+            if (command == "exit")
+            {
+                return;
+            }
+
         }
 
     }
@@ -217,18 +240,55 @@ public static class Program
     }
     public static bool Update(List<string> args)
     {
-        string projectName = args[0];
+        string projectPath;
+        string projectName;
         string projectRoot;
-        if (args[1] == null)
+        if (settings.relativePathMode)
         {
-            projectRoot = HOME;
+            if (projectPathForRelativePathMode != null)
+            {
+                projectPath = projectPathForRelativePathMode;
+                projectName = Path.GetFileName(projectPathForRelativePathMode);
+                projectRoot = Directory.GetDirectoryRoot(projectPathForRelativePathMode);
+            }
+            else
+            {
+                projectName = args[0];
 
+                if (args[1] == null)
+                {
+
+
+                    projectRoot = HOME;
+
+
+                }
+                else
+                {
+                    projectRoot = args[1];
+                }
+                projectPath = Path.Join(projectRoot, projectName);
+
+            }
         }
         else
         {
-            projectRoot = args[1];
+            projectName = args[0];
+
+            if (args[1] == null)
+            {
+
+
+                projectRoot = HOME;
+
+
+            }
+            else
+            {
+                projectRoot = args[1];
+            }
+            projectPath = Path.Join(projectRoot, projectName);
         }
-        string projectPath = Path.Join(projectRoot, projectName);
         string csprojPath;
         List<string> projectFiles = Directory.GetFiles(projectPath).ToList();
         if (args[2] == null)
@@ -265,7 +325,22 @@ public static class Program
         }
         Directory.CreateDirectory(Path.Combine("/storage/emulated/0/CSharpPatchDroidOutput/bin", Path.GetFileNameWithoutExtension(projectName)));
         string outputDir;
-        outputDir = Path.Combine("/storage/emulated/0/CSharpPatchDroidOutput/bin", Path.GetFileNameWithoutExtension(projectName), Path.GetFileNameWithoutExtension(projectName) + ".dll");
+        if (settings.relativePathMode)
+        {
+            if (dllPathForRelativePathMode != null)
+            {
+                outputDir = dllPathForRelativePathMode;
+            }
+            else
+            {
+                outputDir = Path.Combine("/storage/emulated/0/CSharpPatchDroidOutput/bin", Path.GetFileNameWithoutExtension(projectName), Path.GetFileNameWithoutExtension(projectName) + ".dll");
+            }
+        }
+        else
+        {
+            outputDir = Path.Combine("/storage/emulated/0/CSharpPatchDroidOutput/bin", Path.GetFileNameWithoutExtension(projectName), Path.GetFileNameWithoutExtension(projectName) + ".dll");
+
+        }
         Print.print("开始编译");
         Print.print("编译中");
         return Compiler.Start(csprojPath, outputDir, projectPath);
@@ -287,11 +362,8 @@ public static class Program
     }
     public static Decompiler CreateProject(List<string> args)
     {
-        var rootDir = args[5];
-        if (rootDir == null)
-        {
-            rootDir = HOME;
-        }
+        log.tip("已开始反编译项目");
+
         if (args[0] == null)
         {
             Print.error("dll路径是必填的");
@@ -303,6 +375,18 @@ public static class Program
             Print.error("dll路径不存在");
             log.error($"dll路径不存在:{args[0]}", "Program,Main Line194");
             return null;
+        }
+        var rootDir = args[5];
+        if (rootDir == null)
+        {
+            if (settings.relativePathMode)
+            {
+                rootDir = Path.GetDirectoryName(args[0]);
+            }
+            else
+            {
+                rootDir = HOME;
+            }
         }
         string targetFramework;
         if (args[2] == null && args[3] == null)
@@ -326,7 +410,8 @@ public static class Program
             targetFramework = fw + ",Version=v" + fwv;
 
         }
-        Print.print(targetFramework);
+        log.tip("targetFramework");
+        //Print.print(targetFramework);
         LanguageVersion lv;
         if (args[1] == null)
         {
@@ -371,7 +456,7 @@ public static class Program
                 lv = LanguageVersion.Latest;
             }
         }
-        Print.print("C#" + lv.ToString());
+        log.tip("C#版本:" + lv.ToString());
 
         string outputDir;
         string fileName;
@@ -396,6 +481,11 @@ public static class Program
             outputDir = Path.Join(rootDir, fileName + '(' + count + ')');
         }
         Decompiler decompiler = new Decompiler(args[0], lv, outputDir, targetFramework);
+        if (settings.relativePathMode)
+        {
+            projectPathForRelativePathMode = outputDir;
+            dllPathForRelativePathMode = args[0];
+        }
         /*
         int i = 1;
         var lay = new LinearLayout();

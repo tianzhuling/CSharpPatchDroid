@@ -5,6 +5,7 @@ using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace CSharpPatchDroid;
 public static class Compiler
@@ -110,20 +111,46 @@ public static class Compiler
         );
 
         Directory.CreateDirectory(baseDir);
+        var stopwatch = new Stopwatch();
+        stopwatch.Start();
         var result = compilation.Emit(outputPath);
-
+        stopwatch.Stop();
+        var time = stopwatch.Elapsed.TotalSeconds.ToString();
+        int warningCount;
+        int errorCount;
+        int infoCount;
+        int hiddenCount;
         if (!result.Success)
         {
             Print.error("编译失败：");
             Program.log.error("编译失败", "Compiler,Start Line110");
             var newReferences = new List<ErrorAnalysis.Reference>();
             File.WriteAllText("/storage/emulated/0/CSharpPatchDroidOutput/buildLog.txt", string.Empty);
+            warningCount = 0;
+            errorCount = 0;
+            infoCount = 0;
+            hiddenCount = 0;
             foreach (var diag in result.Diagnostics)
             {
                 ErrorAnalysis errorAnalysis = new ErrorAnalysis(diag);
+                if (diag.Severity == DiagnosticSeverity.Warning)
+                {
+                    warningCount++;
+                }
+                if (diag.Severity == DiagnosticSeverity.Error)
+                {
+                    errorCount++;
+                }
+                if (diag.Severity == DiagnosticSeverity.Info)
+                {
+                    infoCount++;
+                }
+                if (diag.Severity == DiagnosticSeverity.Hidden)
+                {
+                    hiddenCount++;
+                }
                 if (diag.Id == "CS0012")
                 {
-
                     ErrorAnalysis.Reference reference = errorAnalysis.getReference();
                     newReferences.Add(reference);
                 }
@@ -132,69 +159,172 @@ public static class Compiler
                 File.AppendAllText("/storage/emulated/0/CSharpPatchDroidOutput/buildLog.txt", diag.ToString() + Environment.NewLine);
 
             }
-            Print.print("已将日志输出到/storage/emulated/0/CSharpPatchDroidOutput/buildLog.txt");
-            var check = new List<string>();
-            var rightReferences = new List<ErrorAnalysis.Reference>();
-            var allDll = Directory.GetFiles(Path.GetDirectoryName(baseDir)).ToList();
-            allDll.RemoveAll(file => !file.EndsWith(".dll"));
-            foreach (var i in newReferences)
+            if (errorCount == 0)
             {
-                if (check.Contains(i.include))
-                {
-                    continue;
-                }
-                if (allDll.Contains(Path.Join(Path.GetDirectoryName(baseDir), i.include + ".dll")))
-                {
-                    check.Add(i.include);
-                    var rightReference = new ErrorAnalysis.Reference(i.include, i.version, i.culture, i.publicKeyToken);
-                    rightReference.setHintPath(Path.Join(Path.GetDirectoryName(baseDir), i.include + ".dll"));
-                    rightReferences.Add(rightReference);
-                }
+                Print.sucess($"错误数量:{errorCount}");
+
             }
-            foreach (var i in rightReferences)
+            else
             {
-                Print.print($"已自动补齐{i.include}:{i.hintPath}");
-                XDocument doc2 = XDocument.Load(csprojPath);
+                Print.error($"错误数量:{errorCount}");
+            }
+            if (warningCount == 0)
+            {
+                Print.sucess($"警告数量:{warningCount}");
 
-                // 创建新的 Reference 元素
-                XElement newReference = new XElement("Reference",
-                    new XAttribute("Include", i.include),
-                    new XElement("HintPath", Path.GetFullPath(Path.Combine(baseDir ?? ".", i.hintPath)))
-                );
+            }
+            else
+            {
+                Print.warning($"警告数量:{warningCount}");
+            }
+            if (infoCount == 0)
+            {
+                Print.sucess($"通知数量:{infoCount}");
 
-                // 查找 ItemGroup 元素并添加新的 Reference
-                XElement itemGroup = doc2.Descendants("ItemGroup")
-                    .FirstOrDefault(ig => ig.Elements("Reference").Any());
-                if (itemGroup != null)
+            }
+            else
+            {
+                Print.print($"通知数量:{infoCount}");
+            }
+
+            if (hiddenCount == 0)
+            {
+                Print.sucess($"隐藏数量:{hiddenCount}");
+
+            }
+            else
+            {
+                Print.print($"隐藏数量:{hiddenCount}");
+            }
+            Print.print("已将日志输出到/storage/emulated/0/CSharpPatchDroidOutput/buildLog.txt");
+            if (Program.settings.autoComplete)
+            {
+                var check = new List<string>();
+                var rightReferences = new List<ErrorAnalysis.Reference>();
+                var allDll = Directory.GetFiles(Path.GetDirectoryName(baseDir)).ToList();
+                allDll.RemoveAll(file => !file.EndsWith(".dll"));
+                Print.print("开始纠错");
+                if (Program.settings.autoCompleteReference)
                 {
-                    itemGroup.Add(newReference);
+                    Print.print("正在检查缺少依赖");
+                    foreach (var i in newReferences)
+                    {
+                        if (check.Contains(i.include))
+                        {
+                            continue;
+                        }
+                        if (allDll.Contains(Path.Join(Path.GetDirectoryName(baseDir), i.include + ".dll")))
+                        {
+                            check.Add(i.include);
+                            var rightReference = new ErrorAnalysis.Reference(i.include, i.version, i.culture, i.publicKeyToken);
+                            rightReference.setHintPath(Path.Join(Path.GetDirectoryName(baseDir), i.include + ".dll"));
+                            rightReferences.Add(rightReference);
+                            Print.print($"缺少依赖:{i.include}");
+                        }
+                    }
+                    Print.print("开始向项目父目录下寻找依赖");
+                    foreach (var i in rightReferences)
+                    {
+                        Print.sucess($"依赖已找到，已自动补齐{i.include}:{i.hintPath}");
+                        XDocument doc2 = XDocument.Load(csprojPath);
+
+                        // 创建新的 Reference 元素
+                        XElement newReference = new XElement("Reference",
+                            new XAttribute("Include", i.include),
+                            new XElement("HintPath", Path.GetFullPath(Path.Combine(baseDir ?? ".", i.hintPath)))
+                        );
+
+                        // 查找 ItemGroup 元素并添加新的 Reference
+                        XElement itemGroup = doc2.Descendants("ItemGroup")
+                            .FirstOrDefault(ig => ig.Elements("Reference").Any());
+                        if (itemGroup != null)
+                        {
+                            itemGroup.Add(newReference);
+                        }
+                        else
+                        {
+                            // 如果没有找到 ItemGroup，则创建一个新的 ItemGroup
+                            doc.Root.Add(new XElement("ItemGroup", newReference));
+                        }
+
+                        // 保存修改后的 .csproj 文件
+                        doc2.Save(csprojPath);
+
+                        Print.sucess("已更新.csproj文件，可以再试一次");
+
+
+                    }
                 }
-                else
-                {
-                    // 如果没有找到 ItemGroup，则创建一个新的 ItemGroup
-                    doc.Root.Add(new XElement("ItemGroup", newReference));
-                }
-
-                // 保存修改后的 .csproj 文件
-                doc2.Save(csprojPath);
-
-                Print.sucess("Reference 已成功添加！");
-
-
             }
 
         }
         else
         {
             File.WriteAllText("/storage/emulated/0/CSharpPatchDroidOutput/buildLog.txt", string.Empty);
-
-            Print.sucess($"编译成功: {outputPath}");
+            warningCount = 0;
+            errorCount = 0;
+            hiddenCount = 0;
+            infoCount = 0;
             foreach (var diag in result.Diagnostics)
             {
+                if (diag.Severity == DiagnosticSeverity.Warning)
+                {
+                    warningCount++;
+
+                }
+                if (diag.Severity == DiagnosticSeverity.Info)
+                {
+                    infoCount++;
+                }
+                if (diag.Severity == DiagnosticSeverity.Hidden)
+                {
+                    hiddenCount++;
+                }
                 File.AppendAllText("/storage/emulated/0/CSharpPatchDroidOutput/buildLog.txt", diag.ToString() + Environment.NewLine);
             }
+            Print.sucess($"编译成功:{outputPath}");
+            if (errorCount == 0)
+            {
+                Print.sucess($"错误数量:{errorCount}");
+
+            }
+            else
+            {
+                Print.error($"错误数量:{errorCount}");
+            }
+            if (warningCount == 0)
+            {
+                Print.sucess($"警告数量:{warningCount}");
+
+            }
+            else
+            {
+                Print.warning($"警告数量:{warningCount}");
+            }
+            if (infoCount == 0)
+            {
+                Print.sucess($"通知数量:{infoCount}");
+
+            }
+            else
+            {
+                Print.print($"通知数量:{infoCount}");
+            }
+
+            if (hiddenCount == 0)
+            {
+                Print.sucess($"隐藏数量:{hiddenCount}");
+
+            }
+            else
+            {
+                Print.print($"隐藏数量:{hiddenCount}");
+            }
+            Print.sucess($"本次用时:{time}秒");
             Print.print("已将日志输出到/storage/emulated/0/CSharpPatchDroidOutput/buildLog.txt");
-            Program.log.ok("编译成功");
+
+
+            Program.log.ok("编译成功:");
         }
 
 
