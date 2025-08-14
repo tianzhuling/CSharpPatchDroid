@@ -4,6 +4,7 @@
 ![Build:passing](https://img.shields.io/badge/build-passing-green)
 ![Download:v1.2](https://img.shields.io/badge/download-latest-blue)
 
+[中文?](../)
 ## Overview
 
 ### Logo
