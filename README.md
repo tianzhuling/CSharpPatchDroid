@@ -1,7 +1,7 @@
 # CSharpPatchDroid 
 ![Version:v1.2](https://img.shields.io/badge/version-v1.2-blue
 )
-![build:passing](https://img.shields.io/badge/build-passing)
+![build:passing](https://img.shields.io/badge/build-passing-green)
 ## 简介
 ### Logo
 ![aSimpleLogo](https://tianzhuling.github.io/CSharpPatchDroid/v1.0/doc/icon.png)
