@@ -204,7 +204,18 @@ public static class Compiler
             {
                 var check = new List<string>();
                 var rightReferences = new List<ErrorAnalysis.Reference>();
-                var allDll = Directory.GetFiles(Path.GetDirectoryName(baseDir)).ToList();
+                string referenceRoot;
+                //Print.print(Program.settings.referenceRoot);
+                if (Path.IsPathRooted(Program.settings.referenceRoot))
+                {
+                    referenceRoot = Program.settings.referenceRoot;
+                }
+                else
+                {
+                    referenceRoot = Path.GetFullPath(Path.Combine(baseDir, Program.settings.referenceRoot));
+
+                }
+                var allDll = Directory.GetFiles(referenceRoot).ToList();
                 allDll.RemoveAll(file => !file.EndsWith(".dll"));
                 Print.print("开始纠错");
                 if (Program.settings.autoCompleteReference)
@@ -216,16 +227,16 @@ public static class Compiler
                         {
                             continue;
                         }
-                        if (allDll.Contains(Path.Join(Path.GetDirectoryName(baseDir), i.include + ".dll")))
+                        if (allDll.Contains(Path.Join(referenceRoot, i.include + ".dll")))
                         {
                             check.Add(i.include);
                             var rightReference = new ErrorAnalysis.Reference(i.include, i.version, i.culture, i.publicKeyToken);
-                            rightReference.setHintPath(Path.Join(Path.GetDirectoryName(baseDir), i.include + ".dll"));
+                            rightReference.setHintPath(Path.Join(referenceRoot, i.include + ".dll"));
                             rightReferences.Add(rightReference);
                             Print.print($"缺少依赖:{i.include}");
                         }
                     }
-                    Print.print("开始向项目父目录下寻找依赖");
+                    Print.print($"开始在{referenceRoot}寻找依赖");
                     foreach (var i in rightReferences)
                     {
                         Print.sucess($"依赖已找到，已自动补齐{i.include}:{i.hintPath}");

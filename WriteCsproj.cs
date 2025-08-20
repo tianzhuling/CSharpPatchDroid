@@ -62,7 +62,7 @@ namespace CSharpPatchDroid
             var doc = new XDocument(new XDeclaration("1.0", "utf-8", "yes"), project);
             doc.Save(filePath);
 
-            Print.sucess($"生成.csproj文件成功：{filePath}");
+            Print.sucess($"生成.csproj文件成功");
         }
     }
 }

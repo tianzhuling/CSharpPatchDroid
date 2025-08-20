@@ -12,7 +12,7 @@ using Microsoft.Build.Locator;
 using System.Reflection;
 using System.Runtime.Versioning;
 using dnlib.DotNet;
-
+using F23.StringSimilarity;
 //using NativeUiLib;
 using CSharpPatchDroid;
 namespace CSharpPatchDroid;
@@ -56,15 +56,17 @@ public static class Program
             Directory.CreateDirectory(HOME);
         }
         commandTips = new Dictionary<string, List<string>>();
-        commandTips.Add("create", new List<string>() { "dll路径", "C#版本", "框架(.NETCOREAPP,.NETSTANDARD,.NETFRAMEWORK,SILVERLIGHT)默认.NETFRAMEWORK", "框架版本", "项目名称", "输出根路径(默认在/storage/emulated/0/CSharpPatchDroidOutput/projects)" });
-        commandTips.Add("sethome", new List<string>() { "新HOME路径" });
+        commandTips.Add("create", new List<string>() { "#必填 dll路径", "#选填 C#版本", "#选填 框架(.NETCOREAPP,.NETSTANDARD,.NETFRAMEWORK,SILVERLIGHT，默认.NETFRAMEWORK)", "#选填 框架版本", "#选填 项目名称", "#选填 项目根目录(默认为HOME)" });
+        commandTips.Add("sethome", new List<string>() { "#必填 新HOME路径" });
         commandTips.Add("homepath", new List<string>());
-        commandTips.Add("updateproject", new List<string>() { "项目名称", "根目录路径(HOME目录，默认/storage/emulated/0/CSharpPatchDroidOutput/projects)" });
-        commandTips.Add("update", new List<string>() { "项目名称", "根目录路径(HOME目录，默认/storage/emulated/0/CSharpPatchDroidOutput/projects)", ".csproj文件路径(默认自动查找)" });
+        commandTips.Add("updateproject", new List<string>() { "#必填 项目名称", "#必填 根目录路径(默认为HOME目录)" });
+        commandTips.Add("update", new List<string>() { "#变化 项目名称", "#变化 根目录路径(默认为HOME目录)", "#选填 .csproj文件路径(默认自动查找)" });
         commandTips.Add("clear", new List<string>() { "确定?(确定输入Y，以后都是Y/n)", "你将要删除/storage/emulated/0/CSharpPatchDroidOutput中的所有内容", "最后一道防线" });
         commandTips.Add("resetsettings", new List<string>() { });
         commandTips.Add("restart", new List<string>() { });
         commandTips.Add("exit", new List<string>() { });
+
+        //commandTips.Add("editsettings", new List<string>() { "准备修改的设置项", "修改后的值" });
         //DOTNET = "/storage/emulated/0/CSharpPatchDroidOutput/dotnet/sdk/8.0.412";
         log.ok("完成初始化");
 
@@ -75,13 +77,24 @@ public static class Program
         //LoadProjects();
         while (true)
         {
-            Console.Write("命令>>>");
+            Console.Write("[命令]>>>");
             string command = Console.ReadLine();
             string thisArg;
             if (!commandTips.Keys.Contains(command))
             {
-                Print.error($"错误的命令:{command}");
+                Print.error($"不存在的命令: \"{command}\"");
                 log.error($"命令错误:{command}", "Program,Main Line70");
+                foreach (var i in commandTips.Keys)
+                {
+                    var jw = new JaroWinkler();
+                    double similarity = jw.Similarity(i, command);
+                    if (similarity > 0.7)
+                    {
+                        Print.print($"你是在说\"{i}\"吗");
+                        continue;
+                    }
+
+                }
                 continue;
 
             }
@@ -89,12 +102,26 @@ public static class Program
             thisArg = "";
             int count = 0;
             bool quit = false;
-            List<string> tips = commandTips[command];
+            List<string> tips;
+            tips = commandTips[command];
+            if (settings.absolutePathMode)
+            {
+                if (command == "create")
+                {
+                    tips = new List<string>() { "#必填 dll路径", "#选填 C#版本", "#选填 框架(.NETCOREAPP,.NETSTANDARD,.NETFRAMEWORK,SILVERLIGHT，默认.NETFRAMEWORK)", "#选填 框架版本", "#选填 输出目录" };
+                    command = "createAbsolute";
+                }
+                else if (command == "update")
+                {
+                    tips = new List<string>() { "#变化 项目路径", "#选填 .csproj文件路径(默认自动查找)" };
+                    command = "updateAbsolute";
+                }
+            }
             while (count < tips.Count)
             {
                 string tip = tips[count];
                 count++;
-                Console.Write("参数" + count + ":" + tip + ">>>");
+                Console.Write("[参数 " + count + " ](" + tip + ")>>>");
                 thisArg = Console.ReadLine();
                 if (thisArg == "/over")
                 {
@@ -119,6 +146,7 @@ public static class Program
             {
                 continue;
             }
+            Print.print(new String('-', 45));
             while (args.Count < tips.Count)
             {
                 args.Add(null);
@@ -127,6 +155,7 @@ public static class Program
             if (command == "create")
             {
                 CreateProject(args);
+
             }
             if (command == "updateproject")
             {
@@ -175,6 +204,15 @@ public static class Program
             {
                 return;
             }
+            if (command == "createAbsolute")
+            {
+                createAbsolute(args);
+            }
+            if (command == "updateAbsolute")
+            {
+                updateAbsolute(args);
+            }
+            Print.print(new String('-', 45));
 
         }
 
@@ -203,6 +241,53 @@ public static class Program
         HOME = args[0];
     }
     */
+    public static bool updateAbsolute(List<string> args)
+    {
+        if (args[0] == null)
+        {
+            Print.error("绝对路径模式下，项目路径是必填的");
+            return false;
+        }
+        else if (!Path.Exists(args[0]))
+        {
+            Print.error("项目路径不存在");
+            return false;
+        }
+        return Update(new List<string>() { Path.GetFileName(args[0]), Path.GetDirectoryName(args[0]), args[1] });
+    }
+    public static void createAbsolute(List<string> args)
+    {
+        /*
+        Print.print(Path.GetFileName(args[4]));
+        Print.print(Path.GetDirectoryName(args[4]));
+        */
+
+        string outputName;
+        string outputDir;
+        if (args[0] == null)
+        {
+            Print.error("dll路径是必填的");
+            log.error("dll路径为空");
+            return;
+        }
+        if (!Path.Exists(args[0]))
+        {
+            Print.error("dll路径不存在");
+            log.error($"dll路径不存在:{args[0]}", "Program,createAbsolute Line263");
+            return;
+        }
+        if (args[4] == null)
+        {
+            outputName = Path.GetFileNameWithoutExtension(args[0]);
+            outputDir = Path.GetDirectoryName(args[0]);
+        }
+        else
+        {
+            outputName = Path.GetFileName(args[4]);
+            outputDir = Path.GetDirectoryName(args[4]);
+        }
+        CreateProject(new List<string>() { args[0], args[1], args[2], args[3], outputName, outputDir });
+    }
     public static bool UpdateProject(List<string> args)
     {
         var projectName = args[0];
@@ -388,6 +473,7 @@ public static class Program
                 rootDir = HOME;
             }
         }
+        settings.referenceRoot = Path.GetDirectoryName(args[0]);
         string targetFramework;
         if (args[2] == null && args[3] == null)
         {
@@ -547,35 +633,35 @@ public static class Program
     }
     public static string GetVersion(string dllPath)
     {
-        var module = ModuleDefMD.Load(dllPath);
-
-        //Console.WriteLine("CLR 版本: " + module.RuntimeVersion);
-
-        //bool hasTargetFramework = false;
-        foreach (var attr in module.Assembly.CustomAttributes)
+        try
         {
-            if (attr.TypeFullName == "System.Runtime.Versioning.TargetFrameworkAttribute")
+            var module = ModuleDefMD.Load(dllPath);
+
+            // 尝试获取 TargetFrameworkAttribute
+            foreach (var attr in module.Assembly.CustomAttributes)
             {
-                return attr.ConstructorArguments[0].Value.ToString();
-
+                if (attr.TypeFullName == "System.Runtime.Versioning.TargetFrameworkAttribute")
+                {
+                    return attr.ConstructorArguments[0].Value.ToString();
+                }
             }
+
+            // 如果未找到 TargetFrameworkAttribute，检查是否引用了 System.Core
+            bool refsSystemCore = module.GetAssemblyRefs()
+                                        .Any(asmRef => asmRef.Name.Contains("System.Core"));
+
+            // 根据引用情况推测目标框架版本
+            if (refsSystemCore)
+                return ".NETFramework,Version=v3.5";
+            else
+                return ".NETFramework,Version=v3.0";
         }
-
-
-        // 可能是 2.0 / 3.0 / 3.5，需要进一步猜测
-        bool refsSystemCore = false;
-        foreach (var asmRef in module.GetAssemblyRefs())
+        catch (Exception ex)
         {
-            if (asmRef.Name == "System.Core")
-                refsSystemCore = true;
-            break;
+            // 记录异常信息
+            Console.WriteLine($"Error processing {dllPath}: {ex.Message}");
+            return null;
         }
-
-        if (refsSystemCore)
-            return ".NETFramework,Version=v3.5";
-        else
-            return ".NETFramework,Version=v3.0";
-
     }
 
 }

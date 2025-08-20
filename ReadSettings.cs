@@ -23,8 +23,9 @@ public static class ReadSettings
             HOME = "/storage/emulated/0/CSharpPatchDroidOutput/projects",
             relativePathMode = false,
             autoComplete = true,
-            autoCompleteReference = true
-
+            autoCompleteReference = true,
+            referenceRoot = "../",
+            absolutePathMode = true
         };
         string Settings = JsonSerializer.Serialize(data);
         File.WriteAllText(PATH, Settings);
@@ -41,6 +42,8 @@ public static class ReadSettings
         public bool autoComplete { get; set; }
         public bool autoCompleteReference { get; set; }
         public string HOME { get; set; }
+        public string referenceRoot { get; set; }
+        public bool absolutePathMode { get; set; }
     }
 
 }

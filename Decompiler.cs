@@ -44,9 +44,9 @@ public class Decompiler
         Print.sucess("配置成功");
         Print.print("反编译中……");
         projectDecompiler.DecompileProject(moduleDefinition, outputDir, projectFileWriter, cts.Token);
-        Print.print("");
+        //Print.print("");
         Print.sucess("反编译成功");
-        Print.print("配置.csproj的基本信息中");
+        Print.print("配置.csproj文件的基本信息中");
         this.dllPath = dllPath;
         this.TargetFramework = targetFramework;
         this.outputDir = outputDir;
@@ -100,7 +100,9 @@ public class Decompiler
         var searchDirs = new[] { Path.GetDirectoryName(dllPath) };
         var allowUnsafe = true;
         var csprojReferences = new List<(string Include, string HintPath)>();
-
+        NugetDownloader.number = 0;
+        var referenceNum = 0;
+        var needDownload = new List<string>();
         foreach (var referenceHandle in references)
         {
             var reference = metadataReader.GetAssemblyReference(referenceHandle);
@@ -116,12 +118,29 @@ public class Decompiler
             }
             else
             {
+                referenceNum++;
                 Print.warning($"依赖: {referenceName}\n未找到对应文件");
+
+                needDownload.Add(referenceName);
+
+                //
+
             }
         }
+        foreach (var i in needDownload)
+        {
+            NugetDownloader.Start(i, Path.GetDirectoryName(outputDir), null);
+        }
+        Print.print($"{referenceNum.ToString()}个依赖需下载");
+        if (referenceNum > 0)
+        {
+            Print.print("正在下载中");
+            while (NugetDownloader.number < referenceNum)
+            {
 
-
-
+            }
+            Print.sucess("下载完成，可将反编译结果删除后再次反编译。");
+        }
         WriteCsproj.Start(
             csprojPath,
             assemblyName,
@@ -129,6 +148,7 @@ public class Decompiler
            langVersion,
            allowUnsafe,
         csprojReferences);
+        Print.sucess($"已输出到{outputDir}");
 
     }
 
