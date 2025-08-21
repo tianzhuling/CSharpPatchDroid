@@ -1,5 +1,5 @@
 # CSharpPatchDroid 
-![Version:v1.2](https://img.shields.io/badge/version-v1.2-blue
+![Version:v1.4](https://img.shields.io/badge/version-v1.4-blue
 )
 ![build:passing](https://img.shields.io/badge/build-passing-green)
 ![download:v1.2](https://img.shields.io/badge/download-latest-blue)
